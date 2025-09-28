@@ -160,12 +160,11 @@ class PDFConverter:
             for paragraph_idx, paragraph in enumerate(docx_doc.paragraphs):
                 text = paragraph.text.strip()
                 
-                # Check if this paragraph should trigger a page break
-                # Look for explicit page breaks in the paragraph
-                if hasattr(paragraph, '_element') and paragraph._element.xml:
-                    if 'w:br' in paragraph._element.xml and 'type="page"' in paragraph._element.xml:
-                        from reportlab.platypus import PageBreak
-                        story.append(PageBreak())
+                # Check for explicit page breaks
+                if paragraph_idx in page_breaks:
+                    story.append(PageBreak())
+                    current_page_height = 0
+                    logger.info(f"Added page break at paragraph {paragraph_idx}")
                 
                 if text:
                     paragraph_count += 1
