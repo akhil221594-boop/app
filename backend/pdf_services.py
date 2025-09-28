@@ -240,7 +240,9 @@ class PDFConverter:
                 
                 # Add extra spacing for empty paragraphs (which might indicate page structure)
                 elif not text and paragraph_count > 0:
-                    story.append(Spacer(1, 12))
+                    spacer_height = 12
+                    story.append(Spacer(1, spacer_height))
+                    current_page_height += spacer_height
             
             # Process tables with proper spacing to maintain page flow
             for table in docx_doc.tables:
