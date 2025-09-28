@@ -46,7 +46,7 @@ class PDFConverter:
     
     @staticmethod
     def docx_to_pdf(docx_file_content: bytes, filename: str) -> bytes:
-        """Convert a DOCX file to PDF preserving text and images"""
+        """Convert a DOCX file to PDF preserving original page structure and count"""
         temp_docx_path = None
         temp_images = []
         
@@ -59,32 +59,59 @@ class PDFConverter:
             # Create PDF buffer
             pdf_buffer = io.BytesIO()
             
-            # Create PDF document with better margins
-            doc = SimpleDocTemplate(pdf_buffer, pagesize=A4,
-                                  rightMargin=50, leftMargin=50,
-                                  topMargin=50, bottomMargin=50)
+            # Create PDF document with proper page settings to maintain original structure
+            doc = SimpleDocTemplate(
+                pdf_buffer, 
+                pagesize=A4,
+                rightMargin=72, leftMargin=72,  # Standard 1 inch margins
+                topMargin=72, bottomMargin=72,
+                title=filename.replace('.docx', ''),
+                showBoundary=0  # Don't show page boundaries
+            )
             
             # Parse DOCX document
             docx_doc = Document(temp_docx_path)
             story = []
             
-            # Get styles
+            # Get styles with proper spacing for page flow
             styles = getSampleStyleSheet()
+            
+            # Create styles that maintain original document spacing
             normal_style = ParagraphStyle(
-                'Normal',
+                'EnhancedNormal',
                 parent=styles['Normal'],
-                fontSize=12,
-                spaceAfter=12,
-                spaceBefore=0,
+                fontSize=11,
+                leading=14,  # Line height
+                spaceAfter=6,  # Space after paragraph (reduced to maintain flow)
+                spaceBefore=3,  # Space before paragraph
+                leftIndent=0,
+                rightIndent=0,
+                firstLineIndent=0,
+                alignment=0,  # Left alignment
+                bulletIndent=0,
+                wordWrap='LTR'
             )
             
-            heading_style = ParagraphStyle(
-                'CustomHeading',
+            heading1_style = ParagraphStyle(
+                'EnhancedHeading1',
                 parent=styles['Heading1'],
                 fontSize=16,
-                spaceAfter=16,
+                leading=20,
+                spaceAfter=12,
                 spaceBefore=12,
                 textColor=colors.black,
+                fontName='Helvetica-Bold'
+            )
+            
+            heading2_style = ParagraphStyle(
+                'EnhancedHeading2',
+                parent=styles['Heading2'],
+                fontSize=14,
+                leading=18,
+                spaceAfter=10,
+                spaceBefore=10,
+                textColor=colors.black,
+                fontName='Helvetica-Bold'
             )
             
             # Extract images first
@@ -92,47 +119,80 @@ class PDFConverter:
             temp_images = [img_path for img_path, _ in extracted_images]
             image_index = 0
             
-            # Add title
-            title = Paragraph(f"Document: {filename.replace('.docx', '')}", heading_style)
-            story.append(title)
-            story.append(Spacer(1, 20))
+            # Process paragraphs in order to maintain document flow
+            paragraph_count = 0
             
-            # Process paragraphs with better text handling
             for paragraph in docx_doc.paragraphs:
                 text = paragraph.text.strip()
-                if text:
-                    # Handle different paragraph styles
-                    if paragraph.style.name.startswith('Heading') or text.isupper():
-                        para = Paragraph(text, heading_style)
-                    else:
-                        # Clean text for PDF
-                        clean_text = text.replace('\n', '<br/>')
-                        # Handle bold and italic (basic)
-                        for run in paragraph.runs:
-                            if run.bold:
-                                clean_text = clean_text.replace(run.text, f'<b>{run.text}</b>')
-                            elif run.italic:
-                                clean_text = clean_text.replace(run.text, f'<i>{run.text}</i>')
-                        
-                        para = Paragraph(clean_text, normal_style)
-                    
-                    story.append(para)
-                    story.append(Spacer(1, 6))
                 
-                # Add images if available (simple approach)
-                if image_index < len(extracted_images) and text:
-                    try:
-                        img_path, _ = extracted_images[image_index]
-                        # Resize image to fit page
-                        img = RLImage(img_path, width=4*inch, height=3*inch)
-                        story.append(Spacer(1, 12))
-                        story.append(img)
-                        story.append(Spacer(1, 12))
-                        image_index += 1
-                    except Exception as e:
-                        logger.warning(f"Could not add image to PDF: {e}")
+                # Check if this paragraph should trigger a page break
+                # Look for explicit page breaks in the paragraph
+                if hasattr(paragraph, '_element') and paragraph._element.xml:
+                    if 'w:br' in paragraph._element.xml and 'type="page"' in paragraph._element.xml:
+                        from reportlab.platypus import PageBreak
+                        story.append(PageBreak())
+                
+                if text:
+                    paragraph_count += 1
+                    
+                    # Determine paragraph style based on Word formatting
+                    selected_style = normal_style
+                    
+                    if paragraph.style.name.startswith('Heading'):
+                        if '1' in paragraph.style.name:
+                            selected_style = heading1_style
+                        else:
+                            selected_style = heading2_style
+                    elif any(run.bold for run in paragraph.runs if run.text.strip()):
+                        # If the paragraph has bold text, treat as heading
+                        selected_style = heading2_style
+                    
+                    # Process runs for formatting
+                    formatted_text = ""
+                    for run in paragraph.runs:
+                        run_text = run.text
+                        if run_text:
+                            if run.bold:
+                                run_text = f"<b>{run_text}</b>"
+                            if run.italic:
+                                run_text = f"<i>{run_text}</i>"
+                            formatted_text += run_text
+                    
+                    # If no formatting found, use plain text
+                    if not formatted_text.strip():
+                        formatted_text = text
+                    
+                    # Replace line breaks with proper PDF line breaks
+                    formatted_text = formatted_text.replace('\n', '<br/>')
+                    
+                    para = Paragraph(formatted_text, selected_style)
+                    story.append(para)
+                    
+                    # Add appropriate spacing based on content
+                    if paragraph.style.name.startswith('Heading'):
+                        story.append(Spacer(1, 8))
+                    else:
+                        story.append(Spacer(1, 3))
+                    
+                    # Insert images near related text (every few paragraphs)
+                    if image_index < len(extracted_images) and paragraph_count % 3 == 0:
+                        try:
+                            img_path, _ = extracted_images[image_index]
+                            # Calculate image size to fit within page margins
+                            img = RLImage(img_path, width=5*inch, height=3.5*inch)
+                            story.append(Spacer(1, 6))
+                            story.append(img)
+                            story.append(Spacer(1, 6))
+                            image_index += 1
+                        except Exception as e:
+                            logger.warning(f"Could not add image to PDF: {e}")
+                            image_index += 1
+                
+                # Add extra spacing for empty paragraphs (which might indicate page structure)
+                elif not text and paragraph_count > 0:
+                    story.append(Spacer(1, 12))
             
-            # Process tables with better formatting
+            # Process tables with proper spacing to maintain page flow
             for table in docx_doc.tables:
                 table_data = []
                 for row in table.rows:
@@ -140,32 +200,34 @@ class PDFConverter:
                     for cell in row.cells:
                         cell_text = cell.text.strip()
                         row_data.append(cell_text if cell_text else " ")
-                    if any(row_data):  # Only add non-empty rows
+                    if any(row_data):
                         table_data.append(row_data)
                 
                 if table_data:
-                    # Create table with styling
-                    pdf_table = Table(table_data)
+                    # Create table with proper sizing
+                    pdf_table = Table(table_data, repeatRows=1)
                     pdf_table.setStyle(TableStyle([
-                        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+                        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
                         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                        ('FONTSIZE', (0, 0), (-1, 0), 10),
-                        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                        ('FONTSIZE', (0, 1), (-1, -1), 9),
+                        ('FONTSIZE', (0, 0), (-1, 0), 9),
+                        ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+                        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                        ('FONTSIZE', (0, 1), (-1, -1), 8),
+                        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.lightgrey]),
                     ]))
-                    story.append(Spacer(1, 12))
+                    
+                    story.append(Spacer(1, 10))
                     story.append(pdf_table)
-                    story.append(Spacer(1, 12))
+                    story.append(Spacer(1, 10))
             
-            # Add remaining images at the end
+            # Add any remaining images
             while image_index < len(extracted_images):
                 try:
                     img_path, _ = extracted_images[image_index]
-                    img = RLImage(img_path, width=4*inch, height=3*inch)
+                    img = RLImage(img_path, width=5*inch, height=3.5*inch)
                     story.append(Spacer(1, 12))
                     story.append(img)
                     story.append(Spacer(1, 12))
@@ -174,16 +236,16 @@ class PDFConverter:
                     logger.warning(f"Could not add remaining image to PDF: {e}")
                     image_index += 1
             
-            # Build PDF
-            if not story or len(story) <= 2:  # Only title and spacer
-                # Create a more informative message if no content
+            # Handle empty document case
+            if not story:
                 no_content_para = Paragraph(
-                    f"The document '{filename}' appears to be empty or could not be processed properly. "
-                    "Please ensure the document contains readable text and images.", 
+                    f"The document '{filename}' appears to be empty or could not be processed. "
+                    "Please ensure the document contains readable content.", 
                     normal_style
                 )
-                story = [title, Spacer(1, 20), no_content_para]
+                story = [no_content_para]
             
+            # Build PDF with automatic page breaks based on content flow
             doc.build(story)
             
             # Clean up temp files
@@ -198,7 +260,17 @@ class PDFConverter:
                     pass
             
             pdf_buffer.seek(0)
-            return pdf_buffer.getvalue()
+            pdf_content = pdf_buffer.getvalue()
+            
+            # Log page count for debugging
+            try:
+                from pypdf import PdfReader
+                reader = PdfReader(io.BytesIO(pdf_content))
+                logger.info(f"Converted '{filename}' to PDF with {len(reader.pages)} pages")
+            except:
+                pass
+                
+            return pdf_content
             
         except Exception as e:
             logger.error(f"Error converting DOCX to PDF: {str(e)}")
