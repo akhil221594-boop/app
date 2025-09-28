@@ -13,28 +13,49 @@ const API = `${BACKEND_URL}/api`;
 
 // Placeholder components for routes not yet implemented
 const ImageToPDF = () => (
-  <div className="min-h-screen bg-gray-50 py-8">
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-      <h1 className="text-3xl font-bold text-gray-800 mb-4">Image to PDF</h1>
-      <p className="text-gray-600">This feature will be implemented soon.</p>
+  <div className="min-h-screen bg-gray-50">
+    <section className="bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 text-white py-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h1 className="text-3xl md:text-4xl font-bold mb-4">Image to PDF</h1>
+        <p className="text-lg md:text-xl">Convert images to PDF format</p>
+      </div>
+    </section>
+    <div className="py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <p className="text-gray-600">This feature will be implemented soon.</p>
+      </div>
     </div>
   </div>
 );
 
 const PDFMerger = () => (
-  <div className="min-h-screen bg-gray-50 py-8">
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-      <h1 className="text-3xl font-bold text-gray-800 mb-4">PDF Merger</h1>
-      <p className="text-gray-600">This feature will be implemented soon.</p>
+  <div className="min-h-screen bg-gray-50">
+    <section className="bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 text-white py-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h1 className="text-3xl md:text-4xl font-bold mb-4">PDF Merger</h1>
+        <p className="text-lg md:text-xl">Merge multiple PDF files into one</p>
+      </div>
+    </section>
+    <div className="py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <p className="text-gray-600">This feature will be implemented soon.</p>
+      </div>
     </div>
   </div>
 );
 
 const EMICalculator = () => (
-  <div className="min-h-screen bg-gray-50 py-8">
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-      <h1 className="text-3xl font-bold text-gray-800 mb-4">EMI Calculator</h1>
-      <p className="text-gray-600">This feature will be implemented soon.</p>
+  <div className="min-h-screen bg-gray-50">
+    <section className="bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 text-white py-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h1 className="text-3xl md:text-4xl font-bold mb-4">EMI Calculator</h1>
+        <p className="text-lg md:text-xl">Calculate loan EMI with detailed breakdown</p>
+      </div>
+    </section>
+    <div className="py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <p className="text-gray-600">This feature will be implemented soon.</p>
+      </div>
     </div>
   </div>
 );
