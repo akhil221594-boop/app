@@ -12,7 +12,7 @@ const Header = () => {
     { path: '/word-to-pdf', label: 'Word to PDF', icon: FileText },
     { path: '/pdf-merger', label: 'PDF Merger', icon: Merge },
     { path: '/reduce-pdf-size', label: 'Reduce PDF Size', icon: Minimize },
-    { path: '/calculator', label: 'EMI Calculator', icon: Calculator },
+    { path: '/Calculator', label: 'EMI Calculator', icon: Calculator },
   ];
 
   return (
@@ -20,8 +20,8 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           <Link to="/" className="flex items-center space-x-2">
-            <FileText className="h-8 w-8 text-white" />
-            <span className="text-xl font-bold text-white">PDF Tools</span>
+            <FileText className="h-8 w-8 text-pink-200" />
+            <span className="text-xl font-bold text-pink-200">PDF Tools</span>
           </Link>
           
           <nav className="hidden md:flex space-x-1">
@@ -35,8 +35,8 @@ const Header = () => {
                     variant={isActive ? "default" : "ghost"}
                     className={`flex items-center space-x-2 px-3 py-2 transition-all duration-200 ${
                       isActive 
-                        ? 'bg-white text-gray-800 shadow-md' 
-                        : 'text-white hover:text-gray-200 hover:bg-pink-600/40'
+                        ? 'bg-pink-200 text-pink-900 shadow-md' 
+                        : 'text-pink-100 hover:text-pink-200 hover:bg-pink-600/40'
                     }`}
                   >
                     <Icon className="h-4 w-4" />
@@ -49,7 +49,7 @@ const Header = () => {
 
           {/* Mobile menu button */}
           <div className="md:hidden">
-            <Button variant="ghost" size="sm" className="text-white hover:bg-pink-600/40">
+            <Button variant="ghost" size="sm" className="text-pink-100 hover:bg-pink-600/40">
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
@@ -70,8 +70,8 @@ const Header = () => {
                     variant={isActive ? "default" : "outline"}
                     className={`w-full flex items-center justify-center space-x-2 py-3 ${
                       isActive 
-                        ? 'bg-white text-gray-800' 
-                        : 'text-white hover:text-gray-100 hover:bg-pink-600/40'
+                        ? 'bg-pink-200 text-pink-900' 
+                        : 'text-pink-100 hover:text-pink-200 hover:bg-pink-600/40'
                     }`}
                   >
                     <Icon className="h-4 w-4" />
