@@ -20,6 +20,38 @@ logger = logging.getLogger(__name__)
 class PDFConverter:
     
     @staticmethod
+    def detect_page_breaks(docx_path: str) -> List[int]:
+        """Detect explicit page breaks in the Word document"""
+        page_break_indices = []
+        try:
+            import zipfile as zf
+            with zf.ZipFile(docx_path, 'r') as docx_zip:
+                document_xml = docx_zip.read('word/document.xml').decode('utf-8')
+                
+                # Count paragraphs and find page breaks
+                paragraph_index = 0
+                lines = document_xml.split('<w:p')
+                
+                for i, line in enumerate(lines):
+                    if 'w:br' in line and ('w:type="page"' in line or 'type="page"' in line):
+                        page_break_indices.append(paragraph_index)
+                    if '<w:p' in line or i == 0:  # Count paragraphs
+                        paragraph_index += 1
+                        
+        except Exception as e:
+            logger.warning(f"Could not detect page breaks: {e}")
+            
+        return page_break_indices
+    
+    @staticmethod
+    def estimate_content_height(text: str, style) -> float:
+        """Estimate the height a text block will take in the PDF"""
+        # Rough estimation: each line is about 14 points, each page is about 720 points usable
+        lines = len(text.split('\n')) + (len(text) // 80)  # Assume 80 chars per line
+        height = lines * (style.leading if hasattr(style, 'leading') else 14)
+        return height
+    
+    @staticmethod
     def extract_images_from_docx(docx_path: str) -> List[tuple]:
         """Extract images from DOCX file"""
         images = []
