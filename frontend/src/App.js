@@ -39,7 +39,7 @@ function App() {
           <Route path="/word-to-pdf" element={<WordToPDF />} />
           <Route path="/pdf-merger" element={<PDFMerger />} />
           <Route path="/reduce-pdf-size" element={<ReducePDFSize />} />
-          <Route path="/Calculator" element={<Calculator />} />
+          <Route path="/calculator" element={<Calculator />} />
         </Routes>
         <Toaster />
       </BrowserRouter>
