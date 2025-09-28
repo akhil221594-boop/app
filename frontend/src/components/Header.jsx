@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from './ui/button';
 import { FileText, Image, Merge, Minimize, Calculator, Home } from 'lucide-react';
 
 const Header = () => {
   const location = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const menuRef = useRef(null);
 
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
@@ -15,8 +17,23 @@ const Header = () => {
     { path: '/Calculator', label: 'EMI Calculator', icon: Calculator },
   ];
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMobileMenuOpen(false);
+      }
+    };
+    if (mobileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [mobileMenuOpen]);
+
   return (
-    <header className="bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 shadow-lg border-b border-gray-200">
+    <header className="bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 shadow-lg border-b border-gray-200 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           <Link to="/" className="flex items-center space-x-2">
@@ -24,6 +41,7 @@ const Header = () => {
             <span className="text-xl font-bold text-pink-200">PDF Tools</span>
           </Link>
           
+          {/* Desktop Menu */}
           <nav className="hidden md:flex space-x-1">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -49,7 +67,12 @@ const Header = () => {
 
           {/* Mobile menu button */}
           <div className="md:hidden">
-            <Button variant="ghost" size="sm" className="text-pink-100 hover:bg-pink-600/40">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-pink-100 hover:bg-pink-600/40"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
@@ -57,31 +80,33 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Mobile navigation */}
-        <nav className="md:hidden pb-4">
-          <div className="grid grid-cols-2 gap-2">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.path;
-              
-              return (
-                <Link key={item.path} to={item.path}>
-                  <Button
-                    variant={isActive ? "default" : "outline"}
-                    className={`w-full flex items-center justify-center space-x-2 py-3 ${
-                      isActive 
-                        ? 'bg-pink-200 text-pink-900' 
-                        : 'text-pink-100 hover:text-pink-200 hover:bg-pink-600/40'
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span className="text-sm">{item.label}</span>
-                  </Button>
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
+        {/* Mobile navigation (toggle open) */}
+        {mobileMenuOpen && (
+          <nav ref={menuRef} className="md:hidden pb-4">
+            <div className="grid grid-cols-2 gap-2">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.path;
+                
+                return (
+                  <Link key={item.path} to={item.path} onClick={() => setMobileMenuOpen(false)}>
+                    <Button
+                      variant={isActive ? "default" : "outline"}
+                      className={`w-full flex items-center justify-center space-x-2 py-3 ${
+                        isActive 
+                          ? 'bg-pink-200 text-pink-900' 
+                          : 'text-pink-100 hover:text-pink-200 hover:bg-pink-600/40'
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span className="text-sm">{item.label}</span>
+                    </Button>
+                  </Link>
+                );
+              })}
+            </div>
+          </nav>
+        )}
       </div>
     </header>
   );
