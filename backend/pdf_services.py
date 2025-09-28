@@ -199,24 +199,40 @@ class PDFConverter:
                     # Replace line breaks with proper PDF line breaks
                     formatted_text = formatted_text.replace('\n', '<br/>')
                     
+                    # Estimate content height and add page breaks if needed
+                    estimated_height = PDFConverter.estimate_content_height(formatted_text, selected_style)
+                    
+                    # If content would overflow page, add a page break
+                    if current_page_height + estimated_height > max_page_height and paragraph_count > 0:
+                        story.append(PageBreak())
+                        current_page_height = 0
+                        logger.debug(f"Auto page break added before paragraph {paragraph_count}")
+                    
                     para = Paragraph(formatted_text, selected_style)
                     story.append(para)
+                    current_page_height += estimated_height
                     
                     # Add appropriate spacing based on content
-                    if paragraph.style.name.startswith('Heading'):
-                        story.append(Spacer(1, 8))
-                    else:
-                        story.append(Spacer(1, 3))
+                    spacer_height = 8 if paragraph.style.name.startswith('Heading') else 3
+                    story.append(Spacer(1, spacer_height))
+                    current_page_height += spacer_height
                     
-                    # Insert images near related text (every few paragraphs)
-                    if image_index < len(extracted_images) and paragraph_count % 3 == 0:
+                    # Insert images strategically to maintain page flow
+                    if image_index < len(extracted_images) and paragraph_count % 4 == 0:
                         try:
                             img_path, _ = extracted_images[image_index]
-                            # Calculate image size to fit within page margins
+                            
+                            # Check if image fits on current page
+                            image_height = 3.5 * 72  # Convert inches to points
+                            if current_page_height + image_height > max_page_height:
+                                story.append(PageBreak())
+                                current_page_height = 0
+                            
                             img = RLImage(img_path, width=5*inch, height=3.5*inch)
                             story.append(Spacer(1, 6))
                             story.append(img)
                             story.append(Spacer(1, 6))
+                            current_page_height += image_height + 12
                             image_index += 1
                         except Exception as e:
                             logger.warning(f"Could not add image to PDF: {e}")
