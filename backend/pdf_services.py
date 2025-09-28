@@ -256,6 +256,14 @@ class PDFConverter:
                         table_data.append(row_data)
                 
                 if table_data:
+                    # Estimate table height
+                    table_height = len(table_data) * 20 + 40  # Rough estimation
+                    
+                    # Add page break if table doesn't fit
+                    if current_page_height + table_height > max_page_height:
+                        story.append(PageBreak())
+                        current_page_height = 0
+                    
                     # Create table with proper sizing
                     pdf_table = Table(table_data, repeatRows=1)
                     pdf_table.setStyle(TableStyle([
@@ -274,6 +282,7 @@ class PDFConverter:
                     story.append(Spacer(1, 10))
                     story.append(pdf_table)
                     story.append(Spacer(1, 10))
+                    current_page_height += table_height + 20
             
             # Add any remaining images
             while image_index < len(extracted_images):
