@@ -41,14 +41,6 @@ const WordToPDF = () => {
     }
   };
 
-  const removeFile = (index) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
-    toast({
-      title: "File removed",
-      description: "File has been removed from the conversion list",
-    });
-  };
-
   const clearAllFiles = () => {
     setFiles([]);
     if (fileInputRef.current) {
@@ -97,7 +89,6 @@ const WordToPDF = () => {
         responseType: 'blob',
       });
 
-      // Determine filename and type from response
       const contentDisposition = response.headers['content-disposition'];
       let filename = 'converted-documents';
       if (contentDisposition) {
@@ -107,7 +98,6 @@ const WordToPDF = () => {
         }
       }
 
-      // Download the file
       downloadFile(response.data, filename);
       
       toast({
@@ -117,7 +107,6 @@ const WordToPDF = () => {
           : `${files.length} PDF files packaged in ZIP`,
       });
       
-      // Clear files after successful conversion
       setFiles([]);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -153,6 +142,7 @@ const WordToPDF = () => {
       <div className="py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
             {/* Upload Section */}
             <Card className="lg:col-span-2">
               <CardHeader>
@@ -184,47 +174,19 @@ const WordToPDF = () => {
                 </div>
 
                 {files.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-medium text-gray-700">
-                        Selected Files ({files.length})
-                      </h3>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={clearAllFiles}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Clear All
-                      </Button>
-                    </div>
-                    <div className="max-h-40 overflow-y-auto space-y-2">
-                      {files.map((file, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-3 bg-gray-100 rounded-md"
-                        >
-                          <div className="flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-blue-600" />
-                            <span className="text-sm text-gray-700 truncate max-w-xs">
-                              {file.name}
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              ({(file.size / 1024).toFixed(1)} KB)
-                            </span>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeFile(index)}
-                            className="text-red-600 hover:text-red-700 p-1"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
+                  <div className="flex items-center justify-between mt-4 p-3 bg-gray-100 rounded-md">
+                    <h3 className="font-medium text-gray-700">
+                      Files Selected: {files.length}
+                    </h3>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={clearAllFiles}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Clear All
+                    </Button>
                   </div>
                 )}
               </CardContent>
@@ -272,12 +234,13 @@ const WordToPDF = () => {
                 </CardContent>
               </Card>
 
+              {/* Convert Button */}
               <Card>
                 <CardContent className="pt-6">
                   <Button
                     onClick={handleConvert}
                     disabled={files.length === 0 || isConverting}
-                    className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 shadow-lg transition-all duration-200"
+                    className="w-full bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 hover:opacity-90 text-white font-semibold py-3 shadow-lg transition-all duration-200"
                   >
                     {isConverting ? (
                       <div className="flex items-center gap-2">
@@ -294,17 +257,16 @@ const WordToPDF = () => {
                 </CardContent>
               </Card>
 
-              <Card className="border-blue-200 bg-blue-50">
-                <CardContent className="pt-6">
-                  <div className="text-center">
-                    <h3 className="font-semibold text-blue-800 mb-2">Features</h3>
-                    <ul className="text-sm text-blue-700 space-y-1">
-                      <li>✓ Preserves all formatting</li>
-                      <li>✓ Maintains image quality</li>
-                      <li>✓ Fast conversion</li>
-                      <li>✓ Secure processing</li>
-                    </ul>
-                  </div>
+              {/* Features Section with Gradient Background */}
+              <Card className="border-none bg-gradient-to-r from-purple-400 via-pink-500 to-red-500">
+                <CardContent className="pt-6 text-center text-white">
+                  <h3 className="font-semibold mb-2">Features</h3>
+                  <ul className="text-sm space-y-1">
+                    <li>✓ Preserves all formatting</li>
+                    <li>✓ Maintains image quality</li>
+                    <li>✓ Fast conversion</li>
+                    <li>✓ Secure processing</li>
+                  </ul>
                 </CardContent>
               </Card>
             </div>
