@@ -143,6 +143,9 @@ backend:
         - working: true
           agent: "testing"
           comment: "Word to PDF conversion with single_pdf=false works correctly. Accepts multiple .docx files, creates valid ZIP (2256 bytes) containing individual PDF files. ZIP structure verified with correct filenames (document1.pdf, document2.pdf)."
+        - working: true
+          agent: "testing"
+          comment: "Enhanced content verification for ZIP output completed. Both PDFs in ZIP contain actual document content: document1.pdf (582 characters) and document2.pdf (112 characters). Each PDF preserves unique content from respective source documents including specific test markers and formatting."
 
   - task: "PDF compression"
     implemented: true
