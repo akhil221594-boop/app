@@ -126,14 +126,14 @@ const WordToPDF = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero Section with Gradient */}
-      <section className="bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 text-white py-12">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <div className="min-h-screen bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 text-white">
+      {/* Hero Section */}
+      <section className="py-12 text-center">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-4">
             Word to PDF Converter
           </h1>
-          <p className="text-lg md:text-xl max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl max-w-2xl mx-auto text-pink-100">
             Convert your Word documents (.docx) to PDF format while preserving all formatting and images
           </p>
         </div>
@@ -144,7 +144,7 @@ const WordToPDF = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             {/* Upload Section */}
-            <Card className="lg:col-span-2">
+            <Card className="lg:col-span-2 bg-white/10 border-none text-white backdrop-blur-md">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Upload className="h-5 w-5" />
@@ -153,14 +153,14 @@ const WordToPDF = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div
-                  className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors cursor-pointer"
+                  className="border-2 border-dashed border-white/50 rounded-lg p-8 text-center hover:border-white cursor-pointer"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-lg font-medium text-gray-600 mb-2">
+                  <FileText className="h-12 w-12 text-white mx-auto mb-4" />
+                  <p className="text-lg font-medium mb-2">
                     Click to select Word files
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-pink-100">
                     Support for .docx files with text and images
                   </p>
                   <input
@@ -174,15 +174,15 @@ const WordToPDF = () => {
                 </div>
 
                 {files.length > 0 && (
-                  <div className="flex items-center justify-between mt-4 p-3 bg-gray-100 rounded-md">
-                    <h3 className="font-medium text-gray-700">
+                  <div className="flex items-center justify-between mt-4 p-3 bg-white/20 rounded-md">
+                    <h3 className="font-medium">
                       Files Selected: {files.length}
                     </h3>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={clearAllFiles}
-                      className="text-red-600 hover:text-red-700"
+                      className="text-red-200 border-red-200 hover:bg-red-300/30 hover:text-white"
                     >
                       <Trash2 className="h-4 w-4 mr-1" />
                       Clear All
@@ -194,7 +194,7 @@ const WordToPDF = () => {
 
             {/* Settings & Convert Section */}
             <div className="space-y-6">
-              <Card>
+              <Card className="bg-white/10 border-none text-white backdrop-blur-md">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Settings className="h-5 w-5" />
@@ -205,7 +205,7 @@ const WordToPDF = () => {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        {singlePDF && <CheckCircle className="h-4 w-4 text-green-600" />}
+                        {singlePDF && <CheckCircle className="h-4 w-4 text-green-300" />}
                         <Label htmlFor="single-pdf" className="text-sm font-medium cursor-pointer">
                           Single PDF
                         </Label>
@@ -218,14 +218,14 @@ const WordToPDF = () => {
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        {!singlePDF && <CheckCircle className="h-4 w-4 text-green-600" />}
+                        {!singlePDF && <CheckCircle className="h-4 w-4 text-green-300" />}
                         <Label htmlFor="zip-pdf" className="text-sm font-medium cursor-pointer">
                           Multiple PDFs in ZIP
                         </Label>
                       </div>
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-pink-100">
                     {singlePDF
                       ? 'Merge all documents into one PDF file'
                       : 'Convert each document separately and package in ZIP'
@@ -235,12 +235,12 @@ const WordToPDF = () => {
               </Card>
 
               {/* Convert Button */}
-              <Card>
+              <Card className="bg-white/10 border-none text-white backdrop-blur-md">
                 <CardContent className="pt-6">
                   <Button
                     onClick={handleConvert}
                     disabled={files.length === 0 || isConverting}
-                    className="w-full bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 hover:opacity-90 text-white font-semibold py-3 shadow-lg transition-all duration-200"
+                    className="w-full bg-white/20 hover:bg-white/30 text-white font-semibold py-3 shadow-lg transition-all duration-200"
                   >
                     {isConverting ? (
                       <div className="flex items-center gap-2">
@@ -257,9 +257,9 @@ const WordToPDF = () => {
                 </CardContent>
               </Card>
 
-              {/* Features Section with Gradient Background */}
-              <Card className="border-none bg-gradient-to-r from-purple-400 via-pink-500 to-red-500">
-                <CardContent className="pt-6 text-center text-white">
+              {/* Features Section */}
+              <Card className="bg-white/10 border-none text-white backdrop-blur-md">
+                <CardContent className="pt-6 text-center">
                   <h3 className="font-semibold mb-2">Features</h3>
                   <ul className="text-sm space-y-1">
                     <li>✓ Preserves all formatting</li>
