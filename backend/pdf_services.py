@@ -146,15 +146,18 @@ class PDFConverter:
                 fontName='Helvetica-Bold'
             )
             
-            # Extract images first
+            # Extract images and detect page breaks
             extracted_images = PDFConverter.extract_images_from_docx(temp_docx_path)
             temp_images = [img_path for img_path, _ in extracted_images]
+            page_breaks = PDFConverter.detect_page_breaks(temp_docx_path)
+            
             image_index = 0
+            paragraph_count = 0
+            current_page_height = 0
+            max_page_height = 650  # Approximate usable page height in points
             
             # Process paragraphs in order to maintain document flow
-            paragraph_count = 0
-            
-            for paragraph in docx_doc.paragraphs:
+            for paragraph_idx, paragraph in enumerate(docx_doc.paragraphs):
                 text = paragraph.text.strip()
                 
                 # Check if this paragraph should trigger a page break
