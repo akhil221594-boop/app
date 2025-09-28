@@ -128,6 +128,9 @@ backend:
         - working: true
           agent: "testing"
           comment: "Word to PDF conversion with single_pdf=true works correctly. Accepts .docx files, converts to valid PDF (1340 bytes), returns proper headers (application/pdf, attachment filename). PDF content verified with %PDF header."
+        - working: true
+          agent: "testing"
+          comment: "Enhanced content verification completed. PDF now contains actual document content (591 characters extracted), not just filename. All text content including headings, paragraphs, tables, and special keywords are properly preserved. Test verified 9/9 content items successfully extracted from converted PDF."
 
   - task: "Word to PDF conversion (ZIP output)"
     implemented: true
