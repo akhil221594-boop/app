@@ -54,7 +54,7 @@ const Header = () => {
                     className={`flex items-center space-x-2 px-3 py-2 transition-all duration-200 ${
                       isActive 
                         ? 'bg-pink-200 text-pink-900 shadow-md' 
-                        : 'text-pink-100 hover:text-pink-200 hover:bg-pink-600/40'
+                        : 'text-pink-100 hover:text-black hover:bg-pink-500'
                     }`}
                   >
                     <Icon className="h-4 w-4" />
@@ -70,7 +70,7 @@ const Header = () => {
             <Button
               variant="ghost"
               size="sm"
-              className="text-pink-100 hover:bg-pink-600/40"
+              className="text-pink-100 hover:bg-pink-500 hover:text-black"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -95,7 +95,7 @@ const Header = () => {
                       className={`w-full flex items-center justify-center space-x-2 py-3 ${
                         isActive 
                           ? 'bg-pink-200 text-pink-900' 
-                          : 'text-pink-100 hover:text-pink-200 hover:bg-pink-600/40'
+                          : 'text-pink-100 hover:text-black hover:bg-pink-500'
                       }`}
                     >
                       <Icon className="h-4 w-4" />
