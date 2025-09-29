@@ -16,10 +16,10 @@ const WordToPDF = () => {
   const [processComplete, setProcessComplete] = useState(false);
 
   const handleFileUpload = (event) => {
-    const files = Array.from(event.target.files).filter(file => 
+    const files = Array.from(event.target.files).filter(file =>
       file.name.toLowerCase().endsWith('.docx') || file.name.toLowerCase().endsWith('.doc')
     );
-    
+
     if (files.length > 0) {
       setUploadedFiles(prev => [...prev, ...files]);
       toast({
@@ -52,12 +52,12 @@ const WordToPDF = () => {
     try {
       // Create FormData for file upload
       const formData = new FormData();
-      
+
       // Add all files to FormData
       uploadedFiles.forEach((file) => {
         formData.append('files', file);
       });
-      
+
       // Add output type
       formData.append('output_type', singlePDF ? 'single' : 'multiple');
 
@@ -80,7 +80,7 @@ const WordToPDF = () => {
       // Get filename from response headers
       const contentDisposition = response.headers.get('Content-Disposition');
       let fileName = singlePDF ? "converted-documents.pdf" : "converted-documents.zip";
-      
+
       if (contentDisposition) {
         const fileNameMatch = contentDisposition.match(/filename=(.+)/);
         if (fileNameMatch) {
@@ -91,7 +91,7 @@ const WordToPDF = () => {
       // Create blob and download
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      
+
       const link = document.createElement('a');
       link.href = url;
       link.download = fileName;
@@ -110,7 +110,7 @@ const WordToPDF = () => {
       setIsProcessing(false);
       setProcessComplete(false);
       setProgress(0);
-      
+
       toast({
         title: "Conversion failed",
         description: error.message,
@@ -130,9 +130,9 @@ const WordToPDF = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-4xl mx-auto space-y-8 bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 p-6 rounded-lg">
       <Toaster />
-      
+
       {/* Header */}
       <div className="text-center space-y-4">
         <h1 className="text-5xl font-bold text-white drop-shadow-lg">Word to PDF Converter</h1>
@@ -234,7 +234,7 @@ const WordToPDF = () => {
             </Label>
           </div>
           <p className="text-white/70 text-sm mt-2">
-            {singlePDF 
+            {singlePDF
               ? "All Word documents will be merged into one PDF file"
               : "Each Word document will be converted to a separate PDF and packaged in a ZIP file"
             }
@@ -280,7 +280,7 @@ const WordToPDF = () => {
               </div>
               <Progress value={progress} className="h-2" />
               <p className="text-white/80 text-sm">
-                {isProcessing 
+                {isProcessing
                   ? "Converting your documents to PDF..."
                   : "Conversion completed! Your file is being downloaded."
                 }
