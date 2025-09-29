@@ -50,18 +50,12 @@ const WordToPDF = () => {
     setProcessComplete(false);
 
     try {
-      // Create FormData for file upload
+      // Prepare form data
       const formData = new FormData();
-
-      // Add all files to FormData
-      uploadedFiles.forEach((file) => {
-        formData.append('files', file);
-      });
-
-      // Add output type
+      uploadedFiles.forEach(file => formData.append('files', file));
       formData.append('output_type', singlePDF ? 'single' : 'multiple');
 
-      // Make API call to backend
+      // Call backend API for conversion
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/convert-word-to-pdf`, {
         method: 'POST',
         body: formData,
@@ -72,30 +66,25 @@ const WordToPDF = () => {
         throw new Error(errorData.detail || 'Conversion failed');
       }
 
-      // Update progress to 100%
+      // Success: Update progress and status
       setProgress(100);
       setIsProcessing(false);
       setProcessComplete(true);
 
-      // Get filename from response headers
+      // Get filename from headers or default
       const contentDisposition = response.headers.get('Content-Disposition');
       let fileName = singlePDF ? "converted-documents.pdf" : "converted-documents.zip";
-
       if (contentDisposition) {
-        const fileNameMatch = contentDisposition.match(/filename=(.+)/);
-        if (fileNameMatch) {
-          fileName = fileNameMatch[1].replace(/"/g, '');
-        }
+        const matched = contentDisposition.match(/filename="?(.+)"?/);
+        if (matched) fileName = matched[1];
       }
 
-      // Create blob and download
+      // Download the converted file blob
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-
       const link = document.createElement('a');
       link.href = url;
       link.download = fileName;
-      link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -108,8 +97,8 @@ const WordToPDF = () => {
 
     } catch (error) {
       setIsProcessing(false);
-      setProcessComplete(false);
       setProgress(0);
+      setProcessComplete(false);
 
       toast({
         title: "Conversion failed",
@@ -125,15 +114,14 @@ const WordToPDF = () => {
 
   const clearAll = () => {
     setUploadedFiles([]);
-    setProcessComplete(false);
     setProgress(0);
+    setProcessComplete(false);
   };
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 p-6 rounded-lg">
       <Toaster />
 
-      {/* Header */}
       <div className="text-center space-y-4">
         <h1 className="text-5xl font-bold text-white drop-shadow-lg">Word to PDF Converter</h1>
         <p className="text-xl text-white/90 max-w-2xl mx-auto">
@@ -141,7 +129,6 @@ const WordToPDF = () => {
         </p>
       </div>
 
-      {/* Upload Section */}
       <Card className="bg-white/10 backdrop-blur-md border-white/20">
         <CardHeader>
           <CardTitle className="text-white flex items-center">
@@ -153,7 +140,6 @@ const WordToPDF = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* File Upload Area */}
           <div className="border-2 border-dashed border-white/40 rounded-lg p-8 text-center hover:border-white/60 transition-colors">
             <input
               type="file"
@@ -170,7 +156,6 @@ const WordToPDF = () => {
             </label>
           </div>
 
-          {/* Uploaded Files Display */}
           {uploadedFiles.length > 0 && (
             <div className="bg-white/5 rounded-lg p-4 space-y-3">
               <div className="flex items-center justify-between">
@@ -190,9 +175,7 @@ const WordToPDF = () => {
                 {uploadedFiles.slice(0, 4).map((file, index) => (
                   <div key={index} className="flex items-center bg-white/10 rounded p-2">
                     <FileText className="w-4 h-4 mr-2 text-blue-300" />
-                    <span className="text-white text-sm truncate flex-1">
-                      {file.name}
-                    </span>
+                    <span className="text-white text-sm truncate flex-1">{file.name}</span>
                     <Button
                       onClick={() => removeFile(index)}
                       size="sm"
@@ -214,7 +197,6 @@ const WordToPDF = () => {
         </CardContent>
       </Card>
 
-      {/* Output Options */}
       <Card className="bg-white/10 backdrop-blur-md border-white/20">
         <CardHeader>
           <CardTitle className="text-white">Output Options</CardTitle>
@@ -242,7 +224,6 @@ const WordToPDF = () => {
         </CardContent>
       </Card>
 
-      {/* Convert Button */}
       <div className="text-center">
         <Button
           onClick={handleConvert}
@@ -269,7 +250,6 @@ const WordToPDF = () => {
         </Button>
       </div>
 
-      {/* Progress Bar */}
       {(isProcessing || processComplete) && (
         <Card className="bg-white/10 backdrop-blur-md border-white/20">
           <CardContent className="pt-6">
