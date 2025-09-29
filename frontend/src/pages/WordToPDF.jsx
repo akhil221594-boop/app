@@ -1,278 +1,294 @@
-import React, { useState, useRef } from 'react';
-import { Button } from '../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Switch } from '../components/ui/switch';
-import { Label } from '../components/ui/label';
-import { Upload, FileText, Download, Trash2, Settings, CheckCircle } from 'lucide-react';
-import { useToast } from '../hooks/use-toast';
-import axios from 'axios';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+import React, { useState } from "react";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { Progress } from "../components/ui/progress";
+import { Switch } from "../components/ui/switch";
+import { Label } from "../components/ui/label";
+import { Upload, FileText, Download, CheckCircle, Loader2 } from "lucide-react";
+import { toast } from "../hooks/use-toast";
+import { Toaster } from "../components/ui/toaster";
 
 const WordToPDF = () => {
-  const [files, setFiles] = useState([]);
-  const [isConverting, setIsConverting] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [singlePDF, setSinglePDF] = useState(true);
-  const fileInputRef = useRef(null);
-  const { toast } = useToast();
+  const [processComplete, setProcessComplete] = useState(false);
 
-  const handleFileSelect = (event) => {
-    const selectedFiles = Array.from(event.target.files);
-    const wordFiles = selectedFiles.filter(file => 
-      file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-      file.name.toLowerCase().endsWith('.docx')
+  const handleFileUpload = (event) => {
+    const files = Array.from(event.target.files).filter(file => 
+      file.name.toLowerCase().endsWith('.docx') || file.name.toLowerCase().endsWith('.doc')
     );
     
-    if (wordFiles.length !== selectedFiles.length) {
+    if (files.length > 0) {
+      setUploadedFiles(prev => [...prev, ...files]);
+      toast({
+        title: "Files uploaded successfully",
+        description: `Added ${files.length} Word document(s)`,
+      });
+    } else {
       toast({
         title: "Invalid file type",
-        description: "Please select only .docx files",
+        description: "Please upload Word documents (.docx, .doc)",
         variant: "destructive",
       });
     }
-    
-    if (wordFiles.length > 0) {
-      setFiles(prev => [...prev, ...wordFiles]);
-      toast({
-        title: "Files added successfully",
-        description: `${wordFiles.length} file(s) added for conversion`,
-      });
-    }
-  };
-
-  const clearAllFiles = () => {
-    setFiles([]);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-    toast({
-      title: "All files cleared",
-      description: "Conversion list has been cleared",
-    });
-  };
-
-  const downloadFile = (blob, filename) => {
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
   };
 
   const handleConvert = async () => {
-    if (files.length === 0) {
+    if (uploadedFiles.length === 0) {
       toast({
         title: "No files selected",
-        description: "Please select Word files to convert",
+        description: "Please upload Word documents first",
         variant: "destructive",
       });
       return;
     }
 
-    setIsConverting(true);
-    
+    setIsProcessing(true);
+    setProgress(0);
+    setProcessComplete(false);
+
     try {
+      // Create FormData for file upload
       const formData = new FormData();
-      files.forEach(file => {
+      
+      // Add all files to FormData
+      uploadedFiles.forEach((file) => {
         formData.append('files', file);
       });
-      formData.append('single_pdf', singlePDF.toString());
+      
+      // Add output type
+      formData.append('output_type', singlePDF ? 'single' : 'multiple');
 
-      const response = await axios.post(`${API}/convert/word-to-pdf`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        responseType: 'blob',
+      // Make API call to backend
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/convert-word-to-pdf`, {
+        method: 'POST',
+        body: formData,
       });
 
-      const contentDisposition = response.headers['content-disposition'];
-      let filename = 'converted-documents';
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Conversion failed');
+      }
+
+      // Update progress to 100%
+      setProgress(100);
+      setIsProcessing(false);
+      setProcessComplete(true);
+
+      // Get filename from response headers
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let fileName = singlePDF ? "converted-documents.pdf" : "converted-documents.zip";
+      
       if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
-        if (filenameMatch) {
-          filename = filenameMatch[1];
+        const fileNameMatch = contentDisposition.match(/filename=(.+)/);
+        if (fileNameMatch) {
+          fileName = fileNameMatch[1].replace(/"/g, '');
         }
       }
 
-      downloadFile(response.data, filename);
+      // Create blob and download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
       
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
       toast({
-        title: "Conversion completed!",
-        description: singlePDF 
-          ? `${files.length} files merged into a single PDF`
-          : `${files.length} PDF files packaged in ZIP`,
+        title: "Conversion completed",
+        description: `${fileName} has been downloaded successfully`,
       });
-      
-      setFiles([]);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      
+
     } catch (error) {
-      console.error('Conversion error:', error);
-      const errorMessage = error.response?.data?.detail || 'An error occurred during conversion';
+      setIsProcessing(false);
+      setProcessComplete(false);
+      setProgress(0);
+      
       toast({
         title: "Conversion failed",
-        description: errorMessage,
+        description: error.message,
         variant: "destructive",
       });
-    } finally {
-      setIsConverting(false);
     }
   };
 
+  const removeFile = (index) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const clearAll = () => {
+    setUploadedFiles([]);
+    setProcessComplete(false);
+    setProgress(0);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 text-white">
-      {/* Hero Section */}
-      <section className="py-12 text-center">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">
-            Word to PDF Converter
-          </h1>
-          <p className="text-lg md:text-xl max-w-2xl mx-auto text-pink-100">
-            Convert your Word documents (.docx) to PDF format while preserving all formatting and images
-          </p>
-        </div>
-      </section>
+    <div className="max-w-4xl mx-auto space-y-8">
+      <Toaster />
+      
+      {/* Header */}
+      <div className="text-center space-y-4">
+        <h1 className="text-5xl font-bold text-white drop-shadow-lg">Word to PDF Converter</h1>
+        <p className="text-xl text-white/90 max-w-2xl mx-auto">
+          Convert your Word documents to PDF while preserving layout, images, and formatting
+        </p>
+      </div>
 
-      <div className="py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            {/* Upload Section */}
-            <Card className="lg:col-span-2 bg-white/10 border-none text-white backdrop-blur-md">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Upload className="h-5 w-5" />
-                  Upload Word Files
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div
-                  className="border-2 border-dashed border-white/50 rounded-lg p-8 text-center hover:border-white cursor-pointer"
-                  onClick={() => fileInputRef.current?.click()}
+      {/* Upload Section */}
+      <Card className="bg-white/10 backdrop-blur-md border-white/20">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center">
+            <Upload className="w-6 h-6 mr-3" />
+            Upload Word Documents
+          </CardTitle>
+          <CardDescription className="text-white/80">
+            Select multiple Word files (.docx, .doc) to convert to PDF
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* File Upload Area */}
+          <div className="border-2 border-dashed border-white/40 rounded-lg p-8 text-center hover:border-white/60 transition-colors">
+            <input
+              type="file"
+              multiple
+              accept=".docx,.doc"
+              onChange={handleFileUpload}
+              className="hidden"
+              id="file-upload"
+            />
+            <label htmlFor="file-upload" className="cursor-pointer">
+              <Upload className="w-12 h-12 mx-auto mb-4 text-white/70" />
+              <p className="text-white mb-2">Click to upload Word documents</p>
+              <p className="text-white/70 text-sm">Supports .docx and .doc files</p>
+            </label>
+          </div>
+
+          {/* Uploaded Files Display */}
+          {uploadedFiles.length > 0 && (
+            <div className="bg-white/5 rounded-lg p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-white font-medium">
+                  {uploadedFiles.length} file{uploadedFiles.length !== 1 ? 's' : ''} uploaded
+                </span>
+                <Button
+                  onClick={clearAll}
+                  size="sm"
+                  variant="ghost"
+                  className="text-white/70 hover:text-white hover:bg-white/20"
                 >
-                  <FileText className="h-12 w-12 text-white mx-auto mb-4" />
-                  <p className="text-lg font-medium mb-2">
-                    Click to select Word files
-                  </p>
-                  <p className="text-sm text-pink-100">
-                    Support for .docx files with text and images
-                  </p>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".docx"
-                    multiple
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
-                </div>
-
-                {files.length > 0 && (
-                  <div className="flex items-center justify-between mt-4 p-3 bg-white/20 rounded-md">
-                    <h3 className="font-medium">
-                      Files Selected: {files.length}
-                    </h3>
+                  Clear All
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {uploadedFiles.slice(0, 4).map((file, index) => (
+                  <div key={index} className="flex items-center bg-white/10 rounded p-2">
+                    <FileText className="w-4 h-4 mr-2 text-blue-300" />
+                    <span className="text-white text-sm truncate flex-1">
+                      {file.name}
+                    </span>
                     <Button
-                      variant="outline"
+                      onClick={() => removeFile(index)}
                       size="sm"
-                      onClick={clearAllFiles}
-                      className="text-red-200 border-red-200 hover:bg-red-300/30 hover:text-white"
+                      variant="ghost"
+                      className="text-red-300 hover:text-red-200 p-1 h-auto"
                     >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Clear All
+                      ×
                     </Button>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Settings & Convert Section */}
-            <div className="space-y-6">
-              <Card className="bg-white/10 border-none text-white backdrop-blur-md">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Settings className="h-5 w-5" />
-                    Conversion Settings
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {singlePDF && <CheckCircle className="h-4 w-4 text-green-300" />}
-                        <Label htmlFor="single-pdf" className="text-sm font-medium cursor-pointer">
-                          Single PDF
-                        </Label>
-                      </div>
-                      <Switch
-                        id="single-pdf"
-                        checked={singlePDF}
-                        onCheckedChange={setSinglePDF}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {!singlePDF && <CheckCircle className="h-4 w-4 text-green-300" />}
-                        <Label htmlFor="zip-pdf" className="text-sm font-medium cursor-pointer">
-                          Multiple PDFs in ZIP
-                        </Label>
-                      </div>
-                    </div>
+                ))}
+                {uploadedFiles.length > 4 && (
+                  <div className="text-white/70 text-sm p-2">
+                    +{uploadedFiles.length - 4} more files
                   </div>
-                  <p className="text-xs text-pink-100">
-                    {singlePDF
-                      ? 'Merge all documents into one PDF file'
-                      : 'Convert each document separately and package in ZIP'
-                    }
-                  </p>
-                </CardContent>
-              </Card>
-
-              {/* Convert Button */}
-              <Card className="bg-white/10 border-none text-white backdrop-blur-md">
-                <CardContent className="pt-6">
-                  <Button
-                    onClick={handleConvert}
-                    disabled={files.length === 0 || isConverting}
-                    className="w-full bg-white/20 hover:bg-white/30 text-white font-semibold py-3 shadow-lg transition-all duration-200"
-                  >
-                    {isConverting ? (
-                      <div className="flex items-center gap-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                        Converting...
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <Download className="h-4 w-4" />
-                        Convert to PDF
-                      </div>
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Features Section */}
-              <Card className="bg-white/10 border-none text-white backdrop-blur-md">
-                <CardContent className="pt-6 text-center">
-                  <h3 className="font-semibold mb-2">Features</h3>
-                  <ul className="text-sm space-y-1">
-                    <li>✓ Preserves all formatting</li>
-                    <li>✓ Maintains image quality</li>
-                    <li>✓ Fast conversion</li>
-                    <li>✓ Secure processing</li>
-                  </ul>
-                </CardContent>
-              </Card>
+                )}
+              </div>
             </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Output Options */}
+      <Card className="bg-white/10 backdrop-blur-md border-white/20">
+        <CardHeader>
+          <CardTitle className="text-white">Output Options</CardTitle>
+          <CardDescription className="text-white/80">
+            Choose how you want to receive your converted files
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center space-x-3">
+            <Switch
+              id="output-mode"
+              checked={singlePDF}
+              onCheckedChange={setSinglePDF}
+            />
+            <Label htmlFor="output-mode" className="text-white">
+              {singlePDF ? "Single PDF (merge all files)" : "Multiple PDFs in ZIP"}
+            </Label>
           </div>
-        </div>
+          <p className="text-white/70 text-sm mt-2">
+            {singlePDF 
+              ? "All Word documents will be merged into one PDF file"
+              : "Each Word document will be converted to a separate PDF and packaged in a ZIP file"
+            }
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Convert Button */}
+      <div className="text-center">
+        <Button
+          onClick={handleConvert}
+          disabled={uploadedFiles.length === 0 || isProcessing}
+          size="lg"
+          className="bg-white text-purple-600 hover:bg-white/90 hover:scale-105 transition-all duration-300 shadow-lg px-8 py-3"
+        >
+          {isProcessing ? (
+            <>
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              Converting...
+            </>
+          ) : processComplete ? (
+            <>
+              <CheckCircle className="w-5 h-5 mr-2" />
+              Conversion Complete
+            </>
+          ) : (
+            <>
+              <Download className="w-5 h-5 mr-2" />
+              Convert to PDF
+            </>
+          )}
+        </Button>
       </div>
+
+      {/* Progress Bar */}
+      {(isProcessing || processComplete) && (
+        <Card className="bg-white/10 backdrop-blur-md border-white/20">
+          <CardContent className="pt-6">
+            <div className="space-y-3">
+              <div className="flex justify-between text-white">
+                <span>Conversion Progress</span>
+                <span>{progress}%</span>
+              </div>
+              <Progress value={progress} className="h-2" />
+              <p className="text-white/80 text-sm">
+                {isProcessing 
+                  ? "Converting your documents to PDF..."
+                  : "Conversion completed! Your file is being downloaded."
+                }
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
